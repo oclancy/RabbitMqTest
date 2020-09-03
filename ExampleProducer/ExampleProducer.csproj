@@ -1,12 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <DockerfileRunArguments>--network=rabbitmqtest_rabbitmq</DockerfileRunArguments>
+        <OutputType>Library</OutputType>
+        <StartupObject></StartupObject>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Messages\Messages.csproj" />
-    <ProjectReference Include="..\RabbitClient\RabbitClient.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+      <None Remove="appsettings.Development.json" />
+      <None Remove="appsettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="appsettings.Development.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+      <Content Include="appsettings.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\.dockerignore" Link=".dockerignore">
+            <DependentUpon>$(DockerDefaultDockerfile)</DependentUpon>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="RabbitService" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Messages\Messages.csproj" />
+        <ProjectReference Include="..\RabbitClient\RabbitClient.csproj" />
+    </ItemGroup>
 
 </Project>

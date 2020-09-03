@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,6 +39,10 @@ namespace RabbitService
                     services.AddTransient<IEndpoint, RabbitEndpoint>();
 
                     services.AddHostedService<Worker>();
+
+                    var dlls = Directory.GetFiles(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName, "*.dll");
+                    
+                    services.AddMediatR(dlls.Select(file => Assembly.LoadFile(file)).ToArray());
                 });
     }
 }

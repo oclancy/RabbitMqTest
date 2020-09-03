@@ -1,17 +1,22 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using MediatR;
+using Messages;
+using Microsoft.Extensions.Logging;
 using NLog;
 using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RabbitClient
 {
-    public class RabbitEndpoint : IDisposable, IEndpoint
+    public class RabbitEndpoint : IDisposable, IEndpoint, IRequestHandler<RabbitMessage, bool>
     {
-        public RabbitEndpoint(ILogger<RabbitEndpoint> logger, ClientFactory factory) 
+        public RabbitEndpoint(ILogger<RabbitEndpoint> logger, ClientFactory factory, IMediator mediator) 
         {
             Logger = logger;
+            Mediator = mediator;
             Channel = factory.GetChannel();
             Channel.QueueDeclare(queue: "hello",
                      durable: false,
@@ -21,6 +26,7 @@ namespace RabbitClient
         }
 
         public ILogger<RabbitEndpoint> Logger { get; }
+        public IMediator Mediator { get; }
         public IModel Channel { get; }
 
         public void Publish(string message)
@@ -68,6 +74,13 @@ namespace RabbitClient
             Dispose(true);
             // TODO: uncomment the following line if the finalizer is overridden above.
             // GC.SuppressFinalize(this);
+        }
+
+        public Task<bool> Handle(RabbitMessage request, CancellationToken cancellationToken)
+        {
+            Publish();
+
+            return Task.FromResult(true);
         }
         #endregion
     }

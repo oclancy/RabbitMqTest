@@ -6,6 +6,8 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
+      - "15671:15671"
+      - "5671:5671"
     volumes:
       - "./data:/var/lib/rabbitmq/mnesia/"
     networks:
