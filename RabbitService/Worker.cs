@@ -32,7 +32,6 @@ namespace RabbitService
             await endpoint.Start(stoppingToken);
 
             var mediator = ServiceProvider.GetService<MyMediator>();
-            mediator.ServiceProvider = ServiceProvider;
             mediator.Initialize();
             Logger.LogInformation("Starting");
             foreach( var startup in Startup) startup.OnStart(ServiceProvider);

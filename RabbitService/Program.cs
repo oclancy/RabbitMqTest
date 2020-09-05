@@ -37,7 +37,7 @@ namespace RabbitService
 
                     var startupTypes = assemblies.GetTypesImplementingInterface(typeof(IRunAtStartup));
                     var configuratorType = assemblies.GetTypesImplementingInterface(typeof(IConfigureAnEndpoint)).FirstOrDefault();
-                    var handlerTypes = assemblies.GetTypesImplementingInterface(typeof(IAmAMessageHandler<RabbitMessage>));
+                    var handlerTypes = assemblies.GetTypesImplementingGenericInterface(typeof(IAmAMessageHandler<>));
 
                     var configurator = Activator.CreateInstance(configuratorType) as IConfigureAnEndpoint;
                     services.AddSingleton<IConfigureAnEndpoint>(configurator);
@@ -46,10 +46,10 @@ namespace RabbitService
                     services.AddSingleton<IEndpoint, RabbitEndpoint>();
                     services.AddSingleton<MyMediator>();
 
-                    foreach (var handler in handlerTypes) 
-                    {
-                        services.AddSingleton(handler);
-                    }
+                    //foreach (var handler in handlerTypes) 
+                    //{
+                    //    services.AddSingleton(handler);
+                    //}
 
                     services.AddSingleton<ClientFactory>();
 

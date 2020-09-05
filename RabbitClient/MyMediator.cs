@@ -1,4 +1,5 @@
 ﻿using Messages;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using System;
@@ -12,8 +13,9 @@ namespace RabbitClient
 {
     public class MyMediator
     {
-        public MyMediator(ILogger<MyMediator> logger, IEnumerable<Type> handlerTypes)
+        public MyMediator(ILogger<MyMediator> logger, IServiceProvider serviceProvider, IEnumerable<Type> handlerTypes)
         {
+            ServiceProvider = serviceProvider;
             Logger = logger;
             HandlerTypes = handlerTypes;
         }
@@ -22,10 +24,10 @@ namespace RabbitClient
         readonly Dictionary<Type, object> HandlerInstances = new Dictionary<Type, object>();
 
         public ILogger<MyMediator> Logger { get; }
-        public IServiceProvider ServiceProvider { get; set; }
+        public IServiceProvider ServiceProvider { get; }
         public IEnumerable<Type> HandlerTypes { get; }
 
-        public void Initialize() 
+        public void Initialize()
         {
             foreach (var handler in HandlerTypes)
             {
@@ -50,14 +52,17 @@ namespace RabbitClient
 
                 if (!HandlerInstances.ContainsKey(handler))
                 {
-                    var config = (IConfigureAnEndpoint)ServiceProvider.GetService(typeof(IConfigureAnEndpoint));
-                    var logger = (ILogger<Publisher>)ServiceProvider.GetService(typeof(ILogger<Publisher>));
-                    var endpoint = (IEndpoint)ServiceProvider.GetService(typeof(IEndpoint));
-
                     //HandlerInstances[handler] = ServiceProvider.GetService(handler);
                     //var constructor = handler.GetConstructor(new[] { typeof(ILogger<Publisher>), typeof(IConfigureAnEndpoint), typeof(IEndpoint) });
-                    var constructor = handler.GetConstructors().First();
-                    var obj = constructor.Invoke(new object[] {  config, endpoint });
+                    //var constructor = handler.GetConstructors().First();
+                    //var constructorParams =
+                    //constructor.GetParameters().Select(info =>
+                    //    ServiceProvider.GetRequiredService(info.ParameterType)
+                    //).ToArray<object>();
+
+                    //var configurator = ServiceProvider.GetService<IConfigureAnEndpoint>();
+                    var obj = ActivatorUtilities.CreateInstance(ServiceProvider, handler);
+                    //var obj = constructor.Invoke(constructorParams);
                     HandlerInstances[handler] = obj;
                 }
 

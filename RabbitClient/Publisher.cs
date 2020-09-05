@@ -11,18 +11,19 @@ namespace RabbitClient
 {
     public class Publisher : IAmAMessageHandler<RabbitMessage>
     {
-        public Publisher(//ILogger<Publisher> logger,
+        public Publisher(
+            ILogger<Publisher> logger,
             IConfigureAnEndpoint configuration,
             IEndpoint endpoint)
         {
-            //Logger = logger;
+            Logger = logger;
             Configuration = configuration;
             Endpoint = endpoint;
         }
 
         public ILogger<Publisher> Logger { get; }
-        public IConfigureAnEndpoint Configuration { get; set; }
-        public IEndpoint Endpoint { get; set; }
+        public IConfigureAnEndpoint Configuration { get; }
+        public IEndpoint Endpoint { get; }
 
         private string GetDestinationForMessage(RabbitMessage request)
         {
@@ -32,9 +33,9 @@ namespace RabbitClient
         public async Task Handle(RabbitMessage request )
         {
             // gettopic
-            //Logger.LogInformation($"Publishing {request}");
+            Logger.LogInformation($"Publishing {request}");
             var destination = GetDestinationForMessage(request);
-            //await Endpoint.Publish(request, destination);
+            await Endpoint.Publish(request, destination);
         }
     }
 }
