@@ -8,6 +8,7 @@ namespace RabbitClient
     {
         public string Hostname { get; set; }
         public string Username { get; set; }
+        public string Queuename { get; set; }
     }
 
 }

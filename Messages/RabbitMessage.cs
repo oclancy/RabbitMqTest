@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿
+using ProtoBuf;
 
 namespace Messages
 {

@@ -1,44 +1,75 @@
-﻿using MediatR;
-using Messages;
+﻿using Messages;
+
 using Microsoft.Extensions.Logging;
-using NLog;
+
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace RabbitClient
 {
-    public class RabbitEndpoint : IDisposable, IEndpoint, IRequestHandler<RabbitMessage, bool>
+    public class RabbitEndpoint : IDisposable, IEndpoint
     {
-        public RabbitEndpoint(ILogger<RabbitEndpoint> logger, ClientFactory factory, IMediator mediator) 
+        public RabbitEndpoint(ILogger<RabbitEndpoint> logger, 
+            ClientFactory factory,
+            Subscriber subscriber,
+            RabbitMqOptions options) 
         {
             Logger = logger;
-            Mediator = mediator;
+            Subscriber = subscriber;
+            QueueName = string.IsNullOrEmpty(options.Queuename)? options.Username : options.Queuename;
             Channel = factory.GetChannel();
-            Channel.QueueDeclare(queue: "hello",
+            Channel.QueueDeclare(queue: QueueName,
                      durable: false,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
+
+
         }
 
-        public ILogger<RabbitEndpoint> Logger { get; }
-        public IMediator Mediator { get; }
-        public IModel Channel { get; }
-
-        public void Publish(string message)
+        public Task Start(CancellationToken token)
         {
-            var body = Encoding.UTF8.GetBytes(message);
+            Consumer = new AsyncEventingBasicConsumer(Channel);
+            Consumer.Received += async (ch, ea) =>
+            {
+                var body = ea.Body.ToArray();
+                // copy or deserialise the payload
+                // and process the message
+                // ...
+                await Subscriber.Dispatch(RabbitMessageExtensions.Deserialize(body));
 
+                Channel.BasicAck(ea.DeliveryTag, false);
+            };
+
+            // this consumer tag identifies the subscription
+            // when it has to be cancelled
+            ConsumerTag = Channel.BasicConsume(QueueName, false, Consumer);
+
+            return Task.CompletedTask;
+        }
+
+
+        public ILogger<RabbitEndpoint> Logger { get; private set; }
+        public Subscriber Subscriber { get;  }
+        public string QueueName { get; }
+        public IModel Channel { get; private set; }
+        public AsyncEventingBasicConsumer Consumer { get; private set; }
+        public string ConsumerTag { get; private set; }
+
+        public Task Publish(RabbitMessage message, string destination)
+        {
             Channel.BasicPublish(exchange: "",
                                  routingKey: "hello",
                                  basicProperties: null,
-                                 body: body);
+                                 body: message.Serialize());
 
             Logger.LogInformation(" [x] Sent {0}", message);
+
+            return Task.CompletedTask;
         }
 
         #region IDisposable Support
@@ -76,12 +107,6 @@ namespace RabbitClient
             // GC.SuppressFinalize(this);
         }
 
-        public Task<bool> Handle(RabbitMessage request, CancellationToken cancellationToken)
-        {
-            Publish();
-
-            return Task.FromResult(true);
-        }
         #endregion
     }
 }

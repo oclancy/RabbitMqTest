@@ -4,10 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using MediatR;
+using Interfaces;
+using Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using RabbitClient;
 
@@ -27,22 +29,34 @@ namespace RabbitService
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    var assemblies = Directory.GetFiles(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName, "*.dll")
+                                        .Select(file => Assembly.LoadFile(file))
+                                        .ToArray();
+
                     services.AddSingleton(hostContext.Configuration.GetSection("RabbitMqOptions").Get<RabbitMqOptions>());
-                            
-                    //services.AddSingleton((sp) => {
-                    //    var options = hostContext.Configuration.Get<RabbitMqOptions>();
-                    //    return new ClientFactory(options);
-                    //});
+
+                    var startupTypes = assemblies.GetTypesImplementingInterface(typeof(IRunAtStartup));
+                    var configuratorType = assemblies.GetTypesImplementingInterface(typeof(IConfigureAnEndpoint)).FirstOrDefault();
+                    var handlerTypes = assemblies.GetTypesImplementingInterface(typeof(IAmAMessageHandler<RabbitMessage>));
+
+                    var configurator = Activator.CreateInstance(configuratorType) as IConfigureAnEndpoint;
+                    services.AddSingleton<IConfigureAnEndpoint>(configurator);
+                    services.AddSingleton<IEnumerable<IRunAtStartup>>((sp) => startupTypes.Select( type => Activator.CreateInstance(type) as IRunAtStartup)) ;
+                    services.AddSingleton<IEnumerable<Type>>(handlerTypes);
+                    services.AddSingleton<IEndpoint, RabbitEndpoint>();
+                    services.AddSingleton<MyMediator>();
+
+                    foreach (var handler in handlerTypes) 
+                    {
+                        services.AddSingleton(handler);
+                    }
 
                     services.AddSingleton<ClientFactory>();
 
-                    services.AddTransient<IEndpoint, RabbitEndpoint>();
+                    services.AddSingleton<Subscriber>();
 
                     services.AddHostedService<Worker>();
-
-                    var dlls = Directory.GetFiles(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName, "*.dll");
                     
-                    services.AddMediatR(dlls.Select(file => Assembly.LoadFile(file)).ToArray());
                 });
     }
 }

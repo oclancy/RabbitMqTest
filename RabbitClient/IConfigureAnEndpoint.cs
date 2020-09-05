@@ -6,7 +6,7 @@ namespace RabbitClient
 {
     public interface IConfigureAnEndpoint
     {
-        IEnumerable<PublishDefinition> ConfigurePublisher();
-        IEnumerable<SubscriptionDefinition> ConfigureSubscriptions();
+        IEnumerable<PublishDefinition> GetPublishDefinitions();
+        IEnumerable<SubscriptionDefinition> GetSubscriptionDefinitions();
     }
 }
