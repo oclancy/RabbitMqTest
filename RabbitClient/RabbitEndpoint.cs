@@ -13,13 +13,13 @@ namespace RabbitClient
 {
     public class RabbitEndpoint : IDisposable, IEndpoint
     {
+        public event EventHandler<RabbitMessage> OnMessage;
+
         public RabbitEndpoint(ILogger<RabbitEndpoint> logger, 
             ClientFactory factory,
-            Subscriber subscriber,
             RabbitMqOptions options) 
         {
             Logger = logger;
-            Subscriber = subscriber;
             QueueName = string.IsNullOrEmpty(options.Queuename)? options.Username : options.Queuename;
             Channel = factory.GetChannel();
             Channel.QueueDeclare(queue: QueueName,
@@ -40,7 +40,7 @@ namespace RabbitClient
                 // copy or deserialise the payload
                 // and process the message
                 // ...
-                await Subscriber.Dispatch(RabbitMessageExtensions.Deserialize(body));
+                OnMessage(this, RabbitMessageExtensions.Deserialize(body));
 
                 Channel.BasicAck(ea.DeliveryTag, false);
             };

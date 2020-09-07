@@ -1,7 +1,10 @@
 {
   "profiles": {
     "RabbitService": {
-      "commandName": "Project",
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "RabbitService.dll",
+      "workingDirectory": "C:\\Users\\olive\\source\\repos\\RabbitMqTest\\RabbitService\\bin\\Debug\\netcoreapp3.1",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

@@ -13,17 +13,15 @@ namespace RabbitClient
     {
         public Publisher(
             ILogger<Publisher> logger,
-            IConfigureAnEndpoint configuration,
-            IEndpoint endpoint)
+            IConfigureAnEndpoint configuration)
         {
             Logger = logger;
             Configuration = configuration;
-            Endpoint = endpoint;
         }
 
         public ILogger<Publisher> Logger { get; }
         public IConfigureAnEndpoint Configuration { get; }
-        public IEndpoint Endpoint { get; }
+        public IEndpoint Endpoint { get; set; }
 
         private string GetDestinationForMessage(RabbitMessage request)
         {

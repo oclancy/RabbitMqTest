@@ -16,6 +16,7 @@
         <UserSecretsId>dotnet-RabbitService-9670F181-C932-43AD-8447-4676171C5004</UserSecretsId>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <DockerfileRunArguments>--network=rabbitmqtest_rabbitmq</DockerfileRunArguments>
+        <StartupObject>RabbitService.Program</StartupObject>
    </PropertyGroup>
 
 

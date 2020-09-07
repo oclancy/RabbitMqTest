@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
+using ProtoBuf.Meta;
 using RabbitClient;
 
 namespace RabbitService
@@ -39,24 +40,25 @@ namespace RabbitService
                     var configuratorType = assemblies.GetTypesImplementingInterface(typeof(IConfigureAnEndpoint)).FirstOrDefault();
                     var handlerTypes = assemblies.GetTypesImplementingGenericInterface(typeof(IAmAMessageHandler<>));
 
-                    var configurator = Activator.CreateInstance(configuratorType) as IConfigureAnEndpoint;
-                    services.AddSingleton<IConfigureAnEndpoint>(configurator);
-                    services.AddSingleton<IEnumerable<IRunAtStartup>>((sp) => startupTypes.Select( type => Activator.CreateInstance(type) as IRunAtStartup)) ;
-                    services.AddSingleton<IEnumerable<Type>>(handlerTypes);
+                    
+                    services.AddSingleton(typeof(IConfigureAnEndpoint), configuratorType);
+                    services.AddSingleton((sp) => startupTypes.Select( type => Activator.CreateInstance(type) as IRunAtStartup)) ;
                     services.AddSingleton<IEndpoint, RabbitEndpoint>();
                     services.AddSingleton<MyMediator>();
-
-                    //foreach (var handler in handlerTypes) 
-                    //{
-                    //    services.AddSingleton(handler);
-                    //}
 
                     services.AddSingleton<ClientFactory>();
 
                     services.AddSingleton<Subscriber>();
 
+                    services.AddSingleton<Publisher>();
+
+
+                    foreach (var type in handlerTypes)
+                    {
+                        services.AddSingleton(typeof(IAmAMessageHandler), type);
+                    }
                     services.AddHostedService<Worker>();
-                    
+
                 });
     }
 }

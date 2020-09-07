@@ -13,11 +13,18 @@ namespace RabbitClient
 {
     public class MyMediator
     {
-        public MyMediator(ILogger<MyMediator> logger, IServiceProvider serviceProvider, IEnumerable<Type> handlerTypes)
+        public MyMediator(ILogger<MyMediator> logger, 
+            IServiceProvider serviceProvider, 
+            IEndpoint endpoint, 
+            Subscriber subscriber, 
+            Publisher publisher)
         {
             ServiceProvider = serviceProvider;
             Logger = logger;
-            HandlerTypes = handlerTypes;
+
+            subscriber.Mediator = this;
+            publisher.Endpoint = endpoint;
+            Add(publisher);
         }
 
         readonly Dictionary<Type, List<Func<IMessageBase, Task>>> MessageHandlerMap = new Dictionary<Type, List<Func<IMessageBase, Task>>>();
@@ -25,15 +32,51 @@ namespace RabbitClient
 
         public ILogger<MyMediator> Logger { get; }
         public IServiceProvider ServiceProvider { get; }
-        public IEnumerable<Type> HandlerTypes { get; }
+
+        //public IEnumerable<Type> HandlerTypes { get; }
+
+        //public void Initialize()
+        //{
+        //    foreach (var handler in HandlerTypes)
+        //    {
+        //        Add(handler);
+        //    }
+        //}
 
         public void Initialize()
         {
-            foreach (var handler in HandlerTypes)
+            foreach (var messageHandler in ServiceProvider.GetServices(typeof(IAmAMessageHandler)))
             {
-                Add(handler);
+                Add(messageHandler);
             }
         }
+
+        public void Add(object handler)
+        {
+            var type = handler.GetType();
+            var handleMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                  .Where(info => info.Name == "Handle"
+                                 && info.GetParameters().Length == 1
+                                 && typeof(IMessageBase).IsAssignableFrom(info.GetParameters().First().ParameterType));
+
+            foreach (var method in handleMethods)
+            {
+                var messageType = method.GetParameters().First();
+                if (!MessageHandlerMap.ContainsKey(messageType.ParameterType))
+                {
+                    MessageHandlerMap[messageType.ParameterType] = new List<Func<IMessageBase, Task>>();
+                }
+
+                if (!HandlerInstances.ContainsKey(type))
+                {
+                    HandlerInstances[type] = handler;
+                }
+
+                CreateDelegate(type, method, messageType.ParameterType);
+
+            }
+        }
+
 
         public void Add(Type handler)
         {

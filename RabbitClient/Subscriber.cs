@@ -10,16 +10,28 @@ namespace RabbitClient
 {
     public class Subscriber
     {
-        public Subscriber(ILogger<Subscriber> logger, IConfigureAnEndpoint configuration, MyMediator mediator)
+        public Subscriber(ILogger<Subscriber> logger, IConfigureAnEndpoint configuration, IEndpoint endpoint)
         {
             Logger = logger;
             Configuration = configuration;
-            Mediator = mediator;
+            Endpoint = endpoint;
+
+            endpoint.OnMessage += Endpoint_OnMessage;
+        }
+
+        private async void Endpoint_OnMessage(object sender, RabbitMessage e)
+        {
+            if (Mediator == null)
+                return;
+
+            Logger.LogInformation($"Dispatching {e}");
+            await Mediator.Dispatch(e);
         }
 
         public ILogger<Subscriber> Logger { get; }
         public IConfigureAnEndpoint Configuration { get; }
-        public MyMediator Mediator { get; }
+        public IEndpoint Endpoint { get; }
+        public MyMediator Mediator { get; set;  }
 
         public async Task Dispatch(RabbitMessage message)
         {

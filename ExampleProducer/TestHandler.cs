@@ -11,7 +11,7 @@ namespace ExampleProducer
     {
         public Task Handle(OrderMessage request)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
     }
 }
