@@ -2,6 +2,7 @@
   <ItemGroup>
       <None Include="$(MSBuildThisFileDirectory)*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Visible>False</Visible>
     </None>
   </ItemGroup>
 </Project>

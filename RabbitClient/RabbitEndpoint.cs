@@ -22,12 +22,16 @@ namespace RabbitClient
             Logger = logger;
             QueueName = string.IsNullOrEmpty(options.Queuename)? options.Username : options.Queuename;
             Channel = factory.GetChannel();
-            Channel.QueueDeclare(queue: QueueName,
+            var result = Channel.QueueDeclare(queue: QueueName,
                      durable: false,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
 
+            if (result.QueueName != QueueName)
+            {
+                throw new ApplicationException($"Could not create Queue: {QueueName}");
+            }
 
         }
 
@@ -60,10 +64,12 @@ namespace RabbitClient
         public AsyncEventingBasicConsumer Consumer { get; private set; }
         public string ConsumerTag { get; private set; }
 
-        public Task Publish(RabbitMessage message, string destination)
+        public Task Publish(RabbitMessage message)
         {
-            Channel.BasicPublish(exchange: "",
-                                 routingKey: "hello",
+            if (string.IsNullOrEmpty(message.PublishTopic)) return Task.FromException(new ArgumentException("Publish Topic not specified."));
+
+            Channel.BasicPublish(exchange: "amq.topic",
+                                 routingKey: message.PublishTopic,
                                  basicProperties: null,
                                  body: message.Serialize());
 
@@ -71,6 +77,12 @@ namespace RabbitClient
 
             return Task.CompletedTask;
         }
+
+        public void SubscribeTopic(string topic)
+        {
+            Channel.QueueBind(QueueName, "amq.topic", topic);
+        }
+
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
@@ -108,5 +120,9 @@ namespace RabbitClient
         }
 
         #endregion
+
+
+
+        
     }
 }

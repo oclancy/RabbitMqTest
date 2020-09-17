@@ -4,8 +4,8 @@ using ProtoBuf;
 namespace Messages
 {
     [ProtoContract]
-    [ProtoInclude(1, typeof(ReceiptMessage))]
-    [ProtoInclude(2, typeof(OrderMessage))]
+    [ProtoInclude(100, typeof(ReceiptMessage))]
+    [ProtoInclude(101, typeof(OrderMessage))]
     public class RabbitMessage : IMessageBase
     {
         [ProtoMember(1)]

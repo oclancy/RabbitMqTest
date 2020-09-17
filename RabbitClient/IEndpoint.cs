@@ -9,8 +9,8 @@ namespace RabbitClient
     {
         event EventHandler<RabbitMessage> OnMessage;
 
-        Task Publish(RabbitMessage request, string message);
-        //void Subscribe<T>( string topic, TMessage)
+        Task Publish(RabbitMessage request);
         Task Start(CancellationToken token);
+        void SubscribeTopic(string topic);
     }
 }

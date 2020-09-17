@@ -19,7 +19,7 @@ namespace RabbitClient
             {
                 HostName = options.Hostname,
                 UserName = options.Username,
-                Password = options.Username,
+                Password = options.Password,
                 Port = AmqpTcpEndpoint.UseDefaultPort
             };
             factory.DispatchConsumersAsync = true;

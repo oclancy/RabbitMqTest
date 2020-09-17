@@ -16,6 +16,12 @@ namespace RabbitClient
             Configuration = configuration;
             Endpoint = endpoint;
 
+            foreach (var subs in configuration.GetSubscriptionDefinitions())
+            {
+                endpoint.SubscribeTopic(subs.Topic);
+            }
+                
+
             endpoint.OnMessage += Endpoint_OnMessage;
         }
 

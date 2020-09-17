@@ -1,11 +1,10 @@
 ﻿using Messages;
+
 using Microsoft.Extensions.Logging;
+
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace RabbitClient
 {
@@ -23,17 +22,23 @@ namespace RabbitClient
         public IConfigureAnEndpoint Configuration { get; }
         public IEndpoint Endpoint { get; set; }
 
-        private string GetDestinationForMessage(RabbitMessage request)
-        {
-            return string.Empty;
-        }
-
         public async Task Handle(RabbitMessage request )
         {
             // gettopic
             Logger.LogInformation($"Publishing {request}");
-            var destination = GetDestinationForMessage(request);
-            await Endpoint.Publish(request, destination);
+            var destination = Configuration.GetPublishDefinitions()
+                                           .FirstOrDefault( p => p.MessageType==request.GetType());
+
+            request.PublishTopic = destination?.Topic;
+
+            try
+            {
+                await Endpoint.Publish(request);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, $"Message not sent: {request}");
+            }
         }
     }
 }

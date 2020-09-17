@@ -1,7 +1,9 @@
 {
   "profiles": {
     "ExampleConsumer": {
-      "commandName": "Project"
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "RabbitService.dll"
     },
     "Docker": {
       "commandName": "Docker"

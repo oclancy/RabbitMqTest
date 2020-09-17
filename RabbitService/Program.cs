@@ -1,18 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using Interfaces;
+
 using Messages;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+
 using NLog.Extensions.Logging;
-using ProtoBuf.Meta;
+
 using RabbitClient;
+
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace RabbitService
 {
@@ -34,15 +34,20 @@ namespace RabbitService
                                         .Select(file => Assembly.LoadFile(file))
                                         .ToArray();
 
-                    services.AddSingleton(hostContext.Configuration.GetSection("RabbitMqOptions").Get<RabbitMqOptions>());
+                    services.AddSingleton(hostContext.Configuration.GetSection(RabbitMqOptions.RabbitMqOptionsName).Get<RabbitMqOptions>());
 
                     var startupTypes = assemblies.GetTypesImplementingInterface(typeof(IRunAtStartup));
                     var configuratorType = assemblies.GetTypesImplementingInterface(typeof(IConfigureAnEndpoint)).FirstOrDefault();
                     var handlerTypes = assemblies.GetTypesImplementingGenericInterface(typeof(IAmAMessageHandler<>));
 
                     
-                    services.AddSingleton(typeof(IConfigureAnEndpoint), configuratorType);
-                    services.AddSingleton((sp) => startupTypes.Select( type => Activator.CreateInstance(type) as IRunAtStartup)) ;
+                    if(configuratorType != null)
+                        services.AddSingleton(typeof(IConfigureAnEndpoint), configuratorType);
+                    
+                    //services.AddSingleton((sp) => startupTypes.Select( type => Activator.CreateInstance(type) as IRunAtStartup)) ;
+                    foreach (var startupType in startupTypes)
+                        services.AddSingleton(typeof(IRunAtStartup), startupType);
+
                     services.AddSingleton<IEndpoint, RabbitEndpoint>();
                     services.AddSingleton<MyMediator>();
 
