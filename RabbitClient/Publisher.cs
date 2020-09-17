@@ -24,15 +24,17 @@ namespace RabbitClient
 
         public async Task Handle(RabbitMessage request )
         {
-            // gettopic
-            Logger.LogInformation($"Publishing {request}");
+            // get topic
             var destination = Configuration.GetPublishDefinitions()
                                            .FirstOrDefault( p => p.MessageType==request.GetType());
+
+            if (destination == null) return;
 
             request.PublishTopic = destination?.Topic;
 
             try
             {
+                Logger.LogInformation($"Publishing {request}");
                 await Endpoint.Publish(request);
             }
             catch (Exception ex)

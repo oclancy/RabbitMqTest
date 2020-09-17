@@ -9,33 +9,16 @@ namespace Messages
     {
         public static byte[] Serialize(this RabbitMessage message)
         {
-            try
+            using (var stream = new MemoryStream())
             {
-                using (var stream = new MemoryStream())
-                {
-                    ProtoBuf.Serializer.Serialize(stream, message);
-                    return stream.GetBuffer();
-                }
-            }
-            catch (Exception)
-            {
-                throw;
+                ProtoBuf.Serializer.Serialize(stream, message);
+                return stream.ToArray();
             }
         }
 
         public static RabbitMessage Deserialize(byte[] data)
         {
-            try
-            {
-                using (var stream = new MemoryStream(data))
-                {
-                    return ProtoBuf.Serializer.Deserialize<RabbitMessage>(stream);
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return ProtoBuf.Serializer.Deserialize<RabbitMessage>(new ReadOnlyMemory<byte>(data));
         }
     }
 }

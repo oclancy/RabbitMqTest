@@ -44,7 +44,15 @@ namespace RabbitClient
                 // copy or deserialise the payload
                 // and process the message
                 // ...
-                OnMessage(this, RabbitMessageExtensions.Deserialize(body));
+                try
+                {
+                    var msg = RabbitMessageExtensions.Deserialize(body);
+                    OnMessage(this, msg);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, $"Exception processing message");
+                }
 
                 Channel.BasicAck(ea.DeliveryTag, false);
             };
